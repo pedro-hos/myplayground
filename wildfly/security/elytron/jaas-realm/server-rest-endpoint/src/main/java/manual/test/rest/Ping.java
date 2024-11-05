@@ -23,5 +23,5 @@ public class Ping {
     public String ping() {
         return sessionContext == null ? "No session context! " :  "Hello " + sessionContext.getCallerPrincipal().getName() + "!";
     }
-
+    
 }

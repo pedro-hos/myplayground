@@ -1,0 +1,74 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.wildfly</groupId>
+	<artifactId>jsp-example</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+
+	<properties>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<version.wildfly>34.0.0.Final</version.wildfly>
+		<jakarta.jakartaee-api.version>10.0.0</jakarta.jakartaee-api.version>
+		<version.bom.ee>${version.wildfly}</version.bom.ee>
+		<version.bom.expansion>${version.wildfly}</version.bom.expansion>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<!-- importing the Expansion BOM adds MicroProfile specs -->
+			<dependency>
+				<groupId>org.wildfly.bom</groupId>
+				<artifactId>wildfly-expansion</artifactId>
+				<version>${version.bom.expansion}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+			<!-- importing the ee-with-tools BOM adds specs and other useful
+			artifacts as managed dependencies -->
+			<dependency>
+				<groupId>org.wildfly.bom</groupId>
+				<artifactId>wildfly-ee-with-tools</artifactId>
+				<version>${version.bom.ee}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<dependency>
+			<groupId>jakarta.platform</groupId>
+			<artifactId>jakarta.jakartaee-api</artifactId>
+			<version>${jakarta.jakartaee-api.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.servlet</groupId>
+			<artifactId>jakarta.servlet-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+			<plugin>
+				<groupId>org.wildfly.plugins</groupId>
+				<artifactId>wildfly-maven-plugin</artifactId>
+				<version>2.0.0.Final</version>
+			</plugin>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>3.4.0</version>
+				<configuration>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
