@@ -1,57 +1,56 @@
-# Failover realm in WildFly Elytron
+## Start LDAP
 
-Purpose of failover realm is to support fail over to an alternative realm in cases some realm is unavailable.
-Common use case is to fail over to a local file based realm containing administrator identities when an LDAP or database server has gone down allowing at least administrators to gain access to the server.
+### OpenLDAP
 
-In this example we will add LDAP security realm to the elytron subsystem. You do not have to worry about configuring of LDAP server as this security realm is expected to fail in this example.
-We will also configure filesystem realm. Both realms will have user `frank` configured with role `Admin` and password `secret123`.
-We then configure `failover-realm` to ensure that in cases when LDAP realm is unavailable, we will log this event and use the backup filesystem realm instead.
+1. Run ldap container
+~~~
+podman run -d --name sso-ldap --env LDAP_ORGANISATION=keycloak --env LDAP_DOMAIN=keycloak.org --env LDAP_ADMIN_PASSWORD=admin -p 10389:389 --replace osixia/openldap:1.5.0
+~~~
 
-This is how the failover-realm is added:
+2. Download the test LDIF file https://raw.githubusercontent.com/keycloak/keycloak/release/22.0/examples/ldap/ldap-example-users.ldif
 
-```
-/subsystem=elytron/failover-realm=failoverRealm:add(delegate-realm=exampleLdapRealm,failover-realm=exampleFSRealm)
-```
+~~~
+wget https://raw.githubusercontent.com/keycloak/keycloak/release/22.0/examples/ldap/ldap-example-users.ldif
+~~~
 
-We will also add security domain that uses this `failoverRealm` and add HTTP authentication factory that uses said security domain. 
-We configured undertow subsystem to use this http authentication factory with authentication mechanism `BASIC`.
-Please take a look at the `configureFailoverRealm.cli` file located in this folder for more details.
+3. Add the LDIF to the LDAP
+~~~
+ldapadd -D "cn=admin,dc=keycloak,dc=org" -w admin -f ~/Downloads/ldap-example-users.ldif -c -H ldap://127.0.0.1:10389
+~~~
 
-## Usage
+4. Info
 
-Run wildfly server and then move to source folder of this example. To configure server you can use:
+- Connection URL: ldap://127.0.0.1:10389
+- Bind DN: cn=admin,dc=keycloak,dc=org
+- Bind credentials: admin
+- Users DN: ou=People,dc=keycloak,dc=org
+- RDN LDAP attribute: uid
 
-```bash
-{path_to_wildfly}/bin/jboss-cli.sh --connect --file=configureFailoverRealm.cli
-```
+### Elytron Setup
 
-Compile the secured servlet included in this example and deploy it to the running server:
+1. Configure LDAP context
 
-```bash
-mvn clean install wildfly:deploy
-```
+~~~
+/subsystem=elytron/dir-context=ldap-dir-context:add(url="ldap://localhost:10389",principal="cn=admin,dc=keycloak,dc=org",credential-reference={clear-text="admin"}, referral-mode=follow)
+~~~
 
-Access http://localhost:8080/failover-realm-demo/secure URL with your browser and provide username `frank` and password `secret123`.
-Note that you have been successfully authenticated even though the LDAP server has not been configured. 
-This is because the fail over filesystem realm has been used to successfully authenticate frank after the LDAP realm failed to respond.
-When you look at the log of your running WildFly instance, you will see the following warning:
+2. LDAP realm and Security domain, member={1} on the role filter refers to user DN, member={0} refers to user RDN(in the example below, it should be "uid")
 
-```
-WARN  [org.wildfly.security] (default task-1) ELY13001: Realm is failing over.: org.wildfly.security.auth.server.RealmUnavailableException: ELY01125: Ldap-backed realm failed to obtain context
-```
+~~~
+/subsystem=elytron/ldap-realm=ldap-realm:add(dir-context=ldap-dir-context, direct-verification="true",identity-mapping={rdn-identifier="uid", attribute-mapping=[{filter-base-dn="ou=RealmRoles,dc=keycloak,dc=org",filter="(&(objectClass=groupOfNames)(member={1}))",from="cn",to="Roles", role-recursion="5"}], search-base-dn="ou=People,dc=keycloak,dc=org", use-recursive-search="false"})
 
-This warning message notifies you that the LDAP realm was unavailable and fail over realm was used instead.
+/subsystem=elytron/simple-role-decoder=from-roles-attribute:add(attribute=Roles)
 
-## Restoring configuration
+/subsystem=elytron/security-domain=ldap-security-domain:add(realms=[{realm=ldap-realm,role-decoder=from-roles-attribute}],default-realm=ldap-realm,permission-mapper=default-permission-mapper)
+~~~
 
-Once you are finished with the demo, undeploy the servlet from the running server:
+3. HTTP authentication factory
+~~~
+/subsystem=elytron/http-authentication-factory=ldap-http-auth:add(http-server-mechanism-factory=global,security-domain=ldap-security-domain,mechanism-configurations=[{mechanism-name=BASIC,mechanism-realm-configurations=[{realm-name=ldap-realm}]}])
+~~~
 
-```bash
-mvn wildfly:undeploy
-```
+* Undertow
 
-Then, restore the server configuration by running the `restoreFailoverRealm.cli` script:
-
-```bash
-{path_to_wildfly}/bin/jboss-cli.sh --connect --file=restoreFailoverRealm.cli
-```
+~~~
+/subsystem=undertow/application-security-domain=httpSD:add(http-authentication-factory=ldap-http-auth)
+~~~
