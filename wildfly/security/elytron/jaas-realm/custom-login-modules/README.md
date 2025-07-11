@@ -24,7 +24,7 @@ module add --name=lm --resources=/home/pedro-hos/workspace/code/pessoal/myplaygr
 /subsystem=elytron/security-domain=mySD:add(default-realm=myRealm,realms=[{realm=myRealm}],permission-mapper=default-permission-mapper)
 
 # New Elytron HTTP Authentication Factory, using the Security Domain created before.
-/subsystem=elytron/http-authentication-factory=example-loginconfig-http-auth:add(http-server-mechanism-factory="global",mechanism-configurations=[{mechanism-name="BASIC",mechanism-realm-configurations=[{realm-name="FSRealmUsers"}]}],security-domain=mySD)
+/subsystem=elytron/http-authentication-factory=example-loginconfig-http-auth:add(http-server-mechanism-factory="global",mechanism-configurations=[{mechanism-name="FORM",mechanism-realm-configurations=[{realm-name="FSRealmUsers"}]}],security-domain=mySD)
 
 # EJB Application Security Domain using the Elytron Security Domain
 /subsystem=ejb3/application-security-domain=other:write-attribute(name=security-domain,value=mySD)
