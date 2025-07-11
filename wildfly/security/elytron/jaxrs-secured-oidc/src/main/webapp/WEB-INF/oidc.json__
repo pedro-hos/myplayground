@@ -4,7 +4,7 @@
   "ssl-required": "external",
   "resource": "myclient",
   "credentials": {
-    "secret": "rDqoG5v8c1K1kc39rwvEZKNBNLxMceXq"
+    "secret": "****"
   },
   "bearer-only": true
 }
