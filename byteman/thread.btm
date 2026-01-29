@@ -1,0 +1,10 @@
+# java -javaagent:${BYTEMAN_HOME}/lib/byteman.jar=listener:true,boot:${BYTEMAN_HOME}/lib/byteman.jar -Dorg.jboss.byteman.transform.all ThreadMain
+# bmsubmit.sh
+# bmsubmit.sh -l thread.btm
+
+RULE trace thread start
+CLASS java.lang.Thread
+METHOD start()
+IF true
+DO traceln("*** start for thread: "+ $0.getName())
+ENDRULE

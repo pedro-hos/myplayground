@@ -1,11 +1,12 @@
 # java -javaagent:${BYTEMAN_HOME}/lib/byteman.jar=script:printInfo.btm PrintParamenters Pedro 35
+
 RULE show data entry
 CLASS PrintParamenters
 METHOD void myMethod(String, String)
 AT ENTRY
 BIND
-    name:String = $1
-    age:String = $2
+    name:String = $1;
+    age:String = $2;
 IF true
 #DO traceln("Hello! I am " + $1 + " and I have " + $2 + " years old")
 DO traceln("Hello! I am " + name + " and I have " + age + " years old")

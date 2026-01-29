@@ -1,0 +1,18 @@
+# java -jar -Dorg.jboss.byteman.transform.all -javaagent:${BYTEMAN_HOME}/lib/byteman.jar=script:/home/pedro-hos/workspace/code/pessoal/myplayground/byteman/quarkus.btm,boot:${BYTEMAN_HOME}/lib/byteman.jar,listener:true target/quarkus-app/quarkus-run.
+
+RULE trace hello entry
+CLASS org.acme.GreetingResource
+METHOD hello
+AT ENTRY
+IF true
+DO traceln("entering METHOD")
+ENDRULE
+
+RULE add money
+CLASS org.acme.BancoResource
+METHOD sacar
+AT ENTRY
+IF true
+DO
+    traceln("value = " + $saldo)
+ENDRULE
