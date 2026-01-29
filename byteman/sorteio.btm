@@ -1,0 +1,12 @@
+# jbang --javaagent=${BYTEMAN_HOME}/lib/byteman.jar=script:sorteio.btm Sorteio.java
+
+RULE change the winner
+CLASS Sorteio
+METHOD sorteia()
+AFTER WRITE $sorteado 2
+IF TRUE
+DO
+    traceln("NÚMERO SORTEADO: " + $randomNumber + "\nPESSOA SORTEADA: " + $sorteado + "\n");
+    $randomNumber = 333;
+    $sorteado = "Abacate";
+ENDRULE
